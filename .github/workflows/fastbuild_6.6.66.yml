@@ -635,7 +635,32 @@ jobs:
           ccache -s
           echo "编译后空间:"
           df -h
+          
+      - name: 🔍 [诊断协议执行] 内核产物与 SUSFS 冲突排查点
+        run: |
+          echo "========================================================="
+          echo ">>> 1. 提取最终生成的内核配置 (获取确切证据) <<<"
+          # 验证您 echo 进去的配置是否在最终 defconfig 阶段被其他逻辑覆盖
+          cd kernel_workspace/common/out
+          if [ -f .config ]; then
+            echo "--- 正在抓取真实生效的 KSU 与 SUSFS 配置 ---"
+            grep -iE "CONFIG_KSU|CONFIG_KSU_SUSFS" .config
+          else
+            echo "未找到 .config 文件，请检查输出路径是否正确。"
+          fi
 
+          echo "---------------------------------------------------------"
+          echo ">>> 2. 检查内核 Image 中的管理器通讯端点是否受损 <<<"
+          # 验证 SukiSU 的底层符号是否真的被 builtin 成功编译进内核
+          cd arch/arm64/boot
+          if [ -f Image ]; then
+            echo "--- 检查 ksud 守护进程及 susfs 核心初始化符号 ---"
+            strings Image | grep -iE "ksud|susfs_init|sus_mount" | head -n 10
+          else
+            echo "未找到 Image 内核文件！"
+          fi
+          echo "========================================================="
+          
       - name: 保存新的 ccache 缓存
         if: inputs.ccache_update || steps.ccache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v5
