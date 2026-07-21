@@ -552,28 +552,27 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 源码级检索：定位旁路供电及定量节点
+      - name: 🔍 源码级检索：全盘定位欧加私有旁路节点
         run: |
           echo "========================================================="
-          echo "开始在内核源码中检索旁路供电和定量的核心文件及行号..."
+          echo "开始在【整个源码树】中进行地毯式盲扫..."
           cd kernel_workspace/common
           
-          echo ">>> 1. 检索核心 sysfs 节点名 (寻找具体是哪个 C 文件注册了这些节点) <<<"
-          # 针对 Scene 抓出来的三个核心节点，以及高通通用的限制节点
-          grep -rnE "input_suspend|battery_charging_enabled|constant_charge_current_max|restrict_chg" drivers/power/ drivers/misc/ drivers/usb/ drivers/mfd/ 2>/dev/null || true
+          echo ">>> 1. 全盘强扫：欧加专属挂起/旁路函数 <<<"
+          grep -rnE "oplus_chg_suspend|oplus_chg_set_current|mmi_charging_enable" . 2>/dev/null | grep -iE "\.c$|\.h$" | head -n 30 || true
           
           echo "---------------------------------------------------------"
-          echo ">>> 2. 检索欧加私有充电框架 (寻找限流与挂起函数) <<<"
-          # 欧加通常喜欢把自己的驱动放在 drivers/power/oplus 甚至新建的 drivers/oplus_chg 目录下
-          grep -rnE "oplus_chg_set_current|oplus_chg_suspend|charge_disable|mmi_charging_enable" drivers/ 2>/dev/null || true
+          echo ">>> 2. 全盘强扫：欧加充电限制节点 (restrict_chg) <<<"
+          # 之前咱们在手机终端里抓到过 qcom-battery/restrict_chg，看看它到底在哪个文件里注册的
+          grep -rn "restrict_chg" . 2>/dev/null | grep -iE "\.c$|\.h$" | head -n 30 || true
           
           echo "---------------------------------------------------------"
-          echo ">>> 3. 检索底层的定流/挂起核心变量赋值 <<<"
-          # 查找内核里直接操作充电电流 (charge_current_max) 或充电使能 (charging_enabled) 的关键逻辑
-          grep -rn -A 2 -B 2 -E "charging_enabled.*=|charge_current_max.*=" drivers/power/ 2>/dev/null || true
+          echo ">>> 3. 全盘强扫：查找真正的 SuperVOOC 充电驱动入口 <<<"
+          # 查找真正的快充驱动文件到底藏在哪个神秘文件夹
+          grep -rn "oplus_chg_init" . 2>/dev/null | grep -iE "\.c$" | head -n 10 || true
           
           echo "========================================================="
-          echo "检索跑完！请直接点开本步骤的日志，查找包含 drivers/.../xxx.c:行号 的输出内容。"
+          echo "检索完毕！查看本次输出日志，寻找带 vendor/ 或者 techpack/ 或者 oplus/ 的新路径。"
            
       - name: 构建内核
         run: |
