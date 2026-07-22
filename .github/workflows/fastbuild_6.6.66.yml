@@ -552,27 +552,32 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 源码级检索：全盘定位欧加私有旁路节点
+      - name: 🔍 [逆向旁路供电] 在一加云端内核源码中检索底层节点
         run: |
           echo "========================================================="
-          echo "开始在【整个源码树】中进行地毯式盲扫..."
+          echo ">>> 1. 深入 kernel_workspace/common 搜索旁路驱动源码 <<<"
+          # 进入刚刚通过 aria2c 下载并解压好的内核源码主目录
           cd kernel_workspace/common
           
-          echo ">>> 1. 全盘强扫：欧加专属挂起/旁路函数 <<<"
-          grep -rnE "oplus_chg_suspend|oplus_chg_set_current|mmi_charging_enable" . 2>/dev/null | grep -iE "\.c$|\.h$" | head -n 30 || true
-          
-          echo "---------------------------------------------------------"
-          echo ">>> 2. 全盘强扫：欧加充电限制节点 (restrict_chg) <<<"
-          # 之前咱们在手机终端里抓到过 qcom-battery/restrict_chg，看看它到底在哪个文件里注册的
-          grep -rn "restrict_chg" . 2>/dev/null | grep -iE "\.c$|\.h$" | head -n 30 || true
-          
-          echo "---------------------------------------------------------"
-          echo ">>> 3. 全盘强扫：查找真正的 SuperVOOC 充电驱动入口 <<<"
-          # 查找真正的快充驱动文件到底藏在哪个神秘文件夹
-          grep -rn "oplus_chg_init" . 2>/dev/null | grep -iE "\.c$" | head -n 10 || true
-          
+          if [ -d "drivers" ]; then
+            echo "--- A. 搜捕 /dev/bypass 字符设备注册点 ---"
+            # 搜索是谁在系统里挂载了 /dev/bypass，打印匹配行及上下2行 (-C 2) 方便看上下文
+            grep -rnE -C 2 "\"/dev/bypass\"|\"bypass\"" drivers/power/ drivers/misc/ || echo "未直接找到 /dev/bypass 字符串"
+            
+            echo "---------------------------------------------------------"
+            echo "--- B. 搜捕 mmi_charging_enable 节点底层逻辑 ---"
+            # 搜索一加私有节点，揪出对这个节点进行 write 操作的底层函数
+            grep -rnE -C 2 "mmi_charging_enable" drivers/power/ || echo "未找到 mmi_charging_enable"
+            
+            echo "---------------------------------------------------------"
+            echo "--- C. 狙击 ioctl 控制码 (Magic Number) ---"
+            # 由于之前 echo 没反应，重点排查 ioctl 通信。找出一加私有的 ioctl 控制码
+            grep -rnE -i "ioctl" drivers/power/supply/oplus/ | grep -iE "bypass|charge" | head -n 20 || echo "未找到相关 ioctl"
+            
+          else
+            echo "源码目录 kernel_workspace/common/drivers 未找到！"
+          fi
           echo "========================================================="
-          echo "检索完毕！查看本次输出日志，寻找带 vendor/ 或者 techpack/ 或者 oplus/ 的新路径。"
            
       - name: 构建内核
         run: |
