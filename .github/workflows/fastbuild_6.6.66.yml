@@ -552,31 +552,24 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 [逆向旁路供电] 在一加云端内核源码中检索底层节点
+      - name: 🔍 [逆向旁路供电] 扩大范围全局检索底层节点
         run: |
           echo "========================================================="
-          echo ">>> 1. 深入 kernel_workspace/common 搜索旁路驱动源码 <<<"
-          # 进入刚刚通过 aria2c 下载并解压好的内核源码主目录
           cd kernel_workspace/common
           
-          if [ -d "drivers" ]; then
-            echo "--- A. 搜捕 /dev/bypass 字符设备注册点 ---"
-            # 搜索是谁在系统里挂载了 /dev/bypass，打印匹配行及上下2行 (-C 2) 方便看上下文
-            grep -rnE -C 2 "\"/dev/bypass\"|\"bypass\"" drivers/power/ drivers/misc/ || echo "未直接找到 /dev/bypass 字符串"
-            
-            echo "---------------------------------------------------------"
-            echo "--- B. 搜捕 mmi_charging_enable 节点底层逻辑 ---"
-            # 搜索一加私有节点，揪出对这个节点进行 write 操作的底层函数
-            grep -rnE -C 2 "mmi_charging_enable" drivers/power/ || echo "未找到 mmi_charging_enable"
-            
-            echo "---------------------------------------------------------"
-            echo "--- C. 狙击 ioctl 控制码 (Magic Number) ---"
-            # 由于之前 echo 没反应，重点排查 ioctl 通信。找出一加私有的 ioctl 控制码
-            grep -rnE -i "ioctl" drivers/power/supply/oplus/ | grep -iE "bypass|charge" | head -n 20 || echo "未找到相关 ioctl"
-            
-          else
-            echo "源码目录 kernel_workspace/common/drivers 未找到！"
-          fi
+          echo "--- A. 全局搜捕 /dev/bypass 注册点 ---"
+          # 不再限制目录，直接全局搜索包含 bypass 的设备注册代码
+          grep -rnE -C 2 "misc_register(.*bypass.*)|alloc_chrdev_region(.*bypass.*)" vendor/ techpack/ drivers/ 2>/dev/null || echo "未找到 bypass 注册逻辑"
+          
+          echo "---------------------------------------------------------"
+          echo "--- B. 寻找 Oplus 充电核心目录 ---"
+          # 找出 oplus_chg 到底被一加藏在哪个目录了
+          find . -type d -name "*oplus_chg*" -o -name "*oplus_charger*" 2>/dev/null
+          
+          echo "---------------------------------------------------------"
+          echo "--- C. 暴力检索 IOCTL ---"
+          # 如果找到了 oplus 的充电代码，暴力检索里面的 ioctl 控制码
+          grep -rn -i "ioctl" vendor/ techpack/ 2>/dev/null | grep -iE "bypass|chg" | head -n 20 || echo "未找到相关 ioctl"
           echo "========================================================="
            
       - name: 构建内核
