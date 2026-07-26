@@ -552,26 +552,27 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 [逆向旁路供电] 扩大范围全局检索底层节点
+      - name: 🔍 [硬核检验] 检查 ff-core.c 是否成功注入代码
         run: |
           echo "========================================================="
-          cd kernel_workspace/common
+          echo ">>> 正在核对 ff-core.c 源码修改情况 <<<"
+          FILE_PATH="kernel_workspace/common/drivers/input/ff-core.c"
           
-          echo "--- A. 全局搜捕 /dev/bypass 注册点 ---"
-          # 不再限制目录，直接全局搜索包含 bypass 的设备注册代码
-          grep -rnE -C 2 "misc_register(.*bypass.*)|alloc_chrdev_region(.*bypass.*)" vendor/ techpack/ drivers/ 2>/dev/null || echo "未找到 bypass 注册逻辑"
-          
-          echo "---------------------------------------------------------"
-          echo "--- B. 寻找 Oplus 充电核心目录 ---"
-          # 找出 oplus_chg 到底被一加藏在哪个目录了
-          find . -type d -name "*oplus_chg*" -o -name "*oplus_charger*" 2>/dev/null
-          
-          echo "---------------------------------------------------------"
-          echo "--- C. 暴力检索 IOCTL ---"
-          # 如果找到了 oplus 的充电代码，暴力检索里面的 ioctl 控制码
-          grep -rn -i "ioctl" vendor/ techpack/ 2>/dev/null | grep -iE "bypass|chg" | head -n 20 || echo "未找到相关 ioctl"
+          if [ -f "$FILE_PATH" ]; then
+            echo "--- 1. 检查全局变量 active_gamepad ---"
+            grep -n -C 1 "active_gamepad" "$FILE_PATH" || echo "❌ 未找到 active_gamepad 指针！"
+            
+            echo "--- 2. 检查 FF_CORE_DEBUG 探针 ---"
+            grep -n -C 1 "FF_CORE_DEBUG" "$FILE_PATH" || echo "❌ 未找到探针代码！"
+            
+            echo "--- 3. 检查变轨拦截逻辑 ---"
+            grep -n -C 1 "强制拦截" "$FILE_PATH" || echo "❌ 未找到拦截逻辑！"
+          else
+            echo "❌ 致命错误：完全找不到 $FILE_PATH 文件，解压或路径有误！"
+            exit 1
+          fi
           echo "========================================================="
-           
+          
       - name: 构建内核
         run: |
           WORKDIR="$(pwd)"
