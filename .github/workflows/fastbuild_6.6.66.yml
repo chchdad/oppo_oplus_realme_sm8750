@@ -552,19 +552,19 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 极速探底：终极防崩溃全局显示驱动搜索
+      - name: 🔍 终极地毯式搜索：寻找手机主屏背光控制
         run: |
           echo "========================================================="
-          echo ">>> 1. 搜索高通与一加的 DP/HDMI 控制核心 <<<"
-          find . -type f \( -name "*dp_display*.c" -o -name "*dp_ctrl*.c" -o -name "*oplus*dp*.c" \) 2>/dev/null || true
+          echo ">>> 1. 查找所有直接带 backlight (背光) 的 C 文件 <<<"
+          find . -type f -name "*backlight*.c" 2>/dev/null || true
           
           echo "---------------------------------------------------------"
-          echo ">>> 2. 搜索高通与一加的 主屏/背光 (DSI) 控制核心 <<<"
-          find . -type f \( -name "*dsi_panel*.c" -o -name "*dsi_display*.c" -o -name "*oplus_display_panel*.c" \) 2>/dev/null || true
+          echo ">>> 2. 查找高通 MSM 目录下所有的 DSI (手机屏) 文件 <<<"
+          find ./kernel_workspace/common/drivers/gpu/drm/msm -type f -name "*dsi*.c" 2>/dev/null || true
           
           echo "---------------------------------------------------------"
-          echo ">>> 3. 搜索一加专属屏保/息屏/电源管理模块 <<<"
-          find . -type f \( -name "*oplus_display_aod*.c" -o -name "*oplus_display_power*.c" \) 2>/dev/null || true
+          echo ">>> 3. 全局查找一加(oplus)专属的显示驱动文件 <<<"
+          find . -type f -name "*oplus*display*.c" 2>/dev/null || true
           echo "========================================================="
           
       - name: 构建内核
