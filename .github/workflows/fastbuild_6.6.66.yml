@@ -558,22 +558,30 @@ jobs:
           echo ">>> 1. 正在极速拉取 OnePlus sm8750 外挂驱动项目 (指定分支) <<<"
           git clone --depth 1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_modules
           
-      - name: 🔍 终极雷达 V3：精准狙击马达与音频耦合节点
+      - name: 🔍 精准提取原厂马达源码函数 (用于制定注入特征码)
         run: |
           echo "======================================================="
-          echo " 1. 直接查户口：搜索所有艾为、马达相关的 C 源码文件"
+          echo " 1. 寻找高通 HV 线性马达底层驱动 (qcom-hv-haptics.c)"
           echo "======================================================="
-          find ./oplus_modules/ -type f \( -iname "*aw88*.c" -o -iname "*aw86*.c" -o -iname "*awinic*.c" -o -iname "*haptic*.c" -o -iname "*vibrator*.c" \)
+          HV_FILE=$(find ./oplus_modules -type f -name "qcom-hv-haptics.c" | head -n 1)
+          if [ -n "$HV_FILE" ]; then
+            echo ">> 🎯 成功锁定文件位置: $HV_FILE"
+            echo "-------------------------------------------------------"
+            echo ">> 正在提取 haptics_enable_play 函数及其附近代码..."
+            grep -n -A 25 -B 5 "haptics_enable_play" "$HV_FILE" || echo "未找到 haptics_enable_play"
+            echo "-------------------------------------------------------"
+            echo ">> 正在提取 richtap_file_unlocked_ioctl 函数特征..."
+            grep -n -A 20 -B 5 "richtap_file_unlocked_ioctl" "$HV_FILE" || echo "未找到 richtap_file_unlocked_ioctl"
+          else
+            echo "未找到 qcom-hv-haptics.c，请检查代码树结构。"
+          fi
           
           echo "======================================================="
-          echo " 2. 交叉过滤：只看欧加私有目录里，既有震动又有音频的代码"
+          echo " 2. 寻找逻辑层与特调反馈文件备查"
           echo "======================================================="
-          grep -rnw -iE "haptic|vibrator|awinic|aw88" ./oplus_modules/vendor/oplus/ 2>/dev/null | grep -iE "snd|pcm|audio|smartpa" || echo "未找到耦合代码"
-          
+          find ./oplus_modules -type f -name "haptic_feedback.c" 2>/dev/null || true
+          find ./oplus_modules -type f -name "*oplus*vibrator*.c" 2>/dev/null || true
           echo "======================================================="
-          echo " 3. 精准定位设备节点注册位置 (揪出 aw882xx_smartpa)"
-          echo "======================================================="
-          grep -rn "aw882xx_smartpa" ./oplus_modules/ 2>/dev/null || echo "未找到该节点注册"
           
       - name: 构建内核
         run: |
