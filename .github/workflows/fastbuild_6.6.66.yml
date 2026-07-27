@@ -573,24 +573,13 @@ jobs:
           fi
           echo "========================================================="
 
-      - name: 🔍 [终极雷达] 深度拉取并全量扫描一加私有马达驱动
+      - name: 📖 [核心读取] 打印 haptic_common_driver.c 的关键函数
         run: |
-          echo "========================================================="
-          echo ">>> 1. 开始拉取一加私有模块仓库 (仅克隆最新一层，极速模式) <<<"
-          # 直接拉取你指定的那个分支，--depth=1 保证几秒钟就能拉完
-          git clone --depth=1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_vendor_repo
-          
-          echo ""
-          echo ">>> 2. 正在 vendor/oplus 目录下进行地毯式搜索 <<<"
           cd oplus_vendor_repo/vendor/oplus
-          
-          echo "--- [搜索目标 A] 查找所有包含 motor/vibrator/haptic/bsp 的【文件夹】 ---"
-          find . -type d | grep -iE "motor|vibrator|haptic|bsp" || echo "未找到相关目录"
-          
-          echo ""
-          echo "--- [搜索目标 B] 查找所有包含相关关键字的【C语言源码文件】 ---"
-          find . -type f -name "*.c" | grep -iE "motor|vibrator|haptic|aw8|aac|vib" || echo "未找到相关源码"
-          
+          TARGET_FILE="./kernel/vibrator/oplus_haptic/haptic_common/haptic_common_driver.c"
+          echo "========================================================="
+          # 过滤出包含 play, enable, set_state, vib 相关的函数定义和关键逻辑
+          grep -n -C 5 -iE "haptic_play|haptic_enable|set_state|vibrator_enable" "$TARGET_FILE"
           echo "========================================================="
           
       - name: 构建内核
