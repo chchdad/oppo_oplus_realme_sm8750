@@ -566,35 +566,6 @@ jobs:
           echo ">>> 3. 搜索一加专属屏保/息屏/电源管理模块 <<<"
           find . -type f \( -name "*oplus_display_aod*.c" -o -name "*oplus_display_power*.c" \) 2>/dev/null || true
           echo "========================================================="
-
-     
-      - name: 🔍 [终极雷达] 深度拉取并全量扫描一加私有马达驱动
-        run: |
-          echo "========================================================="
-          echo ">>> 1. 开始拉取一加私有模块仓库 (仅克隆最新一层，极速模式) <<<"
-          # 直接拉取你指定的那个分支，--depth=1 保证几秒钟就能拉完
-          git clone --depth=1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_vendor_repo
-          
-      - name: 🔍 极速探底：搜索高通 DRM 显示相关核心文件
-        run: |
-          echo "========================================================="
-          echo ">>> 1. 正在搜索 DP (Type-C 转 HDMI) 核心控制文件 <<<"
-          find drivers/gpu/drm/msm -type f -name "*dp_display*.c" 2>/dev/null || echo "未找到 dp_display.c"
-          find drivers/gpu/drm/msm -type f -name "*dp_ctrl*.c" 2>/dev/null
-          
-          echo "---------------------------------------------------------"
-          echo ">>> 2. 正在搜索 DSI (手机主屏) 核心控制文件 <<<"
-          find drivers/gpu/drm/msm -type f -name "*dsi_panel*.c" 2>/dev/null || echo "未找到 dsi_panel.c"
-          find drivers/gpu/drm/msm -type f -name "*dsi_display*.c" 2>/dev/null
-          
-          echo "---------------------------------------------------------"
-          echo ">>> 3. 正在捞取背光 (Backlight) 相关的底层节点文件 <<<"
-          find drivers/gpu/drm/msm -type f -name "*backlight*.c" 2>/dev/null
-          
-          echo "---------------------------------------------------------"
-          echo ">>> 4. 暴力全盘搜索包含 'dp_display_enable' 函数的文件 <<<"
-          grep -rn "dp_display_enable" drivers/gpu/drm/msm/ 2>/dev/null | cut -d: -f1 | sort -u || echo "未找到目标函数"
-          echo "========================================================="
           
       - name: 构建内核
         run: |
