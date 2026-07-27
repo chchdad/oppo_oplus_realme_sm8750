@@ -552,25 +552,19 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 [硬核检验] 检查 ff-core.c 是否成功注入代码
+      - name: 🔍 极速探底：终极防崩溃全局显示驱动搜索
         run: |
           echo "========================================================="
-          echo ">>> 正在核对 ff-core.c 源码修改情况 <<<"
-          FILE_PATH="kernel_workspace/common/drivers/input/ff-core.c"
+          echo ">>> 1. 搜索高通与一加的 DP/HDMI 控制核心 <<<"
+          find . -type f \( -name "*dp_display*.c" -o -name "*dp_ctrl*.c" -o -name "*oplus*dp*.c" \) 2>/dev/null || true
           
-          if [ -f "$FILE_PATH" ]; then
-            echo "--- 1. 检查全局变量 active_gamepad ---"
-            grep -n -C 1 "active_gamepad" "$FILE_PATH" || echo "❌ 未找到 active_gamepad 指针！"
-            
-            echo "--- 2. 检查 FF_CORE_DEBUG 探针 ---"
-            grep -n -C 1 "FF_CORE_DEBUG" "$FILE_PATH" || echo "❌ 未找到探针代码！"
-            
-            echo "--- 3. 检查变轨拦截逻辑 ---"
-            grep -n -C 1 "强制拦截" "$FILE_PATH" || echo "❌ 未找到拦截逻辑！"
-          else
-            echo "❌ 致命错误：完全找不到 $FILE_PATH 文件，解压或路径有误！"
-            exit 1
-          fi
+          echo "---------------------------------------------------------"
+          echo ">>> 2. 搜索高通与一加的 主屏/背光 (DSI) 控制核心 <<<"
+          find . -type f \( -name "*dsi_panel*.c" -o -name "*dsi_display*.c" -o -name "*oplus_display_panel*.c" \) 2>/dev/null || true
+          
+          echo "---------------------------------------------------------"
+          echo ">>> 3. 搜索一加专属屏保/息屏/电源管理模块 <<<"
+          find . -type f \( -name "*oplus_display_aod*.c" -o -name "*oplus_display_power*.c" \) 2>/dev/null || true
           echo "========================================================="
 
      
