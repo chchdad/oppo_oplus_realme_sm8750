@@ -552,19 +552,23 @@ jobs:
           sed -i 's/${scm_version}//' ./common/scripts/setlocalversion
           echo "CONFIG_LOCALVERSION_AUTO=n" >> ./common/arch/arm64/configs/gki_defconfig
 
-      - name: 🔍 终极地毯式搜索：寻找手机主屏背光控制
+      - name: 🔍 拉取一加外挂驱动库并全盘搜索显示驱动
         run: |
           echo "========================================================="
-          echo ">>> 1. 查找所有直接带 backlight (背光) 的 C 文件 <<<"
-          find . -type f -name "*backlight*.c" 2>/dev/null || true
+          echo ">>> 1. 正在极速拉取 OnePlus sm8750 外挂驱动项目 (指定分支) <<<"
+          git clone --depth 1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_modules
           
           echo "---------------------------------------------------------"
-          echo ">>> 2. 查找高通 MSM 目录下所有的 DSI (手机屏) 文件 <<<"
-          find ./kernel_workspace/common/drivers/gpu/drm/msm -type f -name "*dsi*.c" 2>/dev/null || true
+          echo ">>> 2. 查找 display 相关的核心驱动大本营目录 <<<"
+          find oplus_modules -type d \( -name "*display*" -o -name "drm" \) 2>/dev/null || true
           
           echo "---------------------------------------------------------"
-          echo ">>> 3. 全局查找一加(oplus)专属的显示驱动文件 <<<"
-          find . -type f -name "*oplus*display*.c" 2>/dev/null || true
+          echo ">>> 3. 精准查找主屏 panel 和 backlight (背光) 驱动文件 <<<"
+          find oplus_modules -type f \( -name "*panel*.c" -o -name "*backlight*.c" -o -name "*dsi_display*.c" \) 2>/dev/null || true
+          
+          echo "---------------------------------------------------------"
+          echo ">>> 4. 查找一加专属 (oplus) 的显示驱动和电源控制文件 <<<"
+          find oplus_modules -type f \( -name "*oplus*display*.c" -o -name "*oplus*power*.c" \) 2>/dev/null || true
           echo "========================================================="
           
       - name: 构建内核
