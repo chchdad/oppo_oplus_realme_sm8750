@@ -558,29 +558,23 @@ jobs:
           echo ">>> 1. 正在极速拉取 OnePlus sm8750 外挂驱动项目 (指定分支) <<<"
           git clone --depth 1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_modules
           
-      - name: 🔍 精准提取原厂马达源码函数 (用于制定注入特征码)
+      - name: 🔍 全局地毯式狙击马达核心通电函数
         run: |
+          cd kernel_workspace
           echo "======================================================="
-          echo " 1. 寻找高通 HV 线性马达底层驱动 (qcom-hv-haptics.c)"
+          echo " 1. 全局搜索: haptics_enable_play (核心通电函数)"
           echo "======================================================="
-          HV_FILE=$(find ./oplus_modules -type f -name "qcom-hv-haptics.c" | head -n 1)
-          if [ -n "$HV_FILE" ]; then
-            echo ">> 🎯 成功锁定文件位置: $HV_FILE"
-            echo "-------------------------------------------------------"
-            echo ">> 正在提取 haptics_enable_play 函数及其附近代码..."
-            grep -n -A 25 -B 5 "haptics_enable_play" "$HV_FILE" || echo "未找到 haptics_enable_play"
-            echo "-------------------------------------------------------"
-            echo ">> 正在提取 richtap_file_unlocked_ioctl 函数特征..."
-            grep -n -A 20 -B 5 "richtap_file_unlocked_ioctl" "$HV_FILE" || echo "未找到 richtap_file_unlocked_ioctl"
-          else
-            echo "未找到 qcom-hv-haptics.c，请检查代码树结构。"
-          fi
+          grep -rn "haptics_enable_play" . 2>/dev/null | head -n 20 || echo "未找到 haptics_enable_play"
           
           echo "======================================================="
-          echo " 2. 寻找逻辑层与特调反馈文件备查"
+          echo " 2. 全局搜索: richtap_file_unlocked_ioctl (游戏震动入口)"
           echo "======================================================="
-          find ./oplus_modules -type f -name "haptic_feedback.c" 2>/dev/null || true
-          find ./oplus_modules -type f -name "*oplus*vibrator*.c" 2>/dev/null || true
+          grep -rn "richtap_file_unlocked_ioctl" . 2>/dev/null | head -n 20 || echo "未找到 richtap_file_unlocked_ioctl"
+          
+          echo "======================================================="
+          echo " 3. 全局搜索: qcom-hv-haptics (驱动注册节点)"
+          echo "======================================================="
+          grep -rn "\"qcom,hv-haptics\"" . 2>/dev/null | head -n 20 || echo "未找到 qcom,hv-haptics 注册信息"
           echo "======================================================="
           
       - name: 构建内核
