@@ -572,6 +572,41 @@ jobs:
             exit 1
           fi
           echo "========================================================="
+
+      - name: 🔍 [雷达探测] 全局扫描原机马达(Haptic/Vibrator)驱动文件
+        run: |
+          echo "========================================================="
+          echo ">>> 正在启动马达驱动文件雷达扫描 <<<"
+          cd kernel_workspace/common/
+          
+          echo "--- [1/4] 扫描 drivers/leds/ 目录 (重点排查区) ---"
+          if [ -d "drivers/leds/" ]; then
+            ls -1 drivers/leds/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
+          else
+            echo "目录不存在"
+          fi
+          
+          echo ""
+          echo "--- [2/4] 扫描 drivers/misc/ 目录 ---"
+          if [ -d "drivers/misc/" ]; then
+            ls -1 drivers/misc/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
+          else
+            echo "目录不存在"
+          fi
+          
+          echo ""
+          echo "--- [3/4] 扫描 drivers/input/misc/ 目录 ---"
+          if [ -d "drivers/input/misc/" ]; then
+            ls -1 drivers/input/misc/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
+          else
+            echo "目录不存在"
+          fi
+          
+          echo ""
+          echo "--- [4/4] 兜底方案：全局暴力搜索源码树 ---"
+          echo "搜索所有包含 'haptic' 或 'vibrator' 的 .c 文件："
+          find drivers/ -type f -name "*.c" | grep -iE "haptic|vibrator|aw869" || echo "全局未搜到标准命名的马达驱动"
+          echo "========================================================="
           
       - name: 构建内核
         run: |
