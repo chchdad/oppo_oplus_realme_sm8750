@@ -558,27 +558,22 @@ jobs:
           echo ">>> 1. 正在极速拉取 OnePlus sm8750 外挂驱动项目 (指定分支) <<<"
           git clone --depth 1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_modules
           
-      - name: 🔍 终极雷达：扫描底层震动与音频耦合节点源码 (修正版)
+      - name: 🔍 终极雷达 V3：精准狙击马达与音频耦合节点
         run: |
           echo "======================================================="
-          echo " 1. 扫描 O-Haptics (音频震动耦合引擎) 相关驱动"
+          echo " 1. 直接查户口：搜索所有艾为、马达相关的 C 源码文件"
           echo "======================================================="
-          grep -rnw -iE "richter|o-haptics|audio_haptic|audio-haptic" ./oplus_modules/ || echo "未找到音频震动耦合直接引用"
+          find ./oplus_modules/ -type f \( -iname "*aw88*.c" -o -iname "*aw86*.c" -o -iname "*awinic*.c" -o -iname "*haptic*.c" -o -iname "*vibrator*.c" \)
           
           echo "======================================================="
-          echo " 2. 扫描 艾为 (Awinic) 音频功放及马达深度绑定代码"
+          echo " 2. 交叉过滤：只看欧加私有目录里，既有震动又有音频的代码"
           echo "======================================================="
-          grep -rnw -iE "aw882xx|awinic_haptic|smartpa_haptic" ./oplus_modules/ || echo "未找到艾为音频震动代码"
+          grep -rnw -iE "haptic|vibrator|awinic|aw88" ./oplus_modules/vendor/oplus/ 2>/dev/null | grep -iE "snd|pcm|audio|smartpa" || echo "未找到耦合代码"
           
           echo "======================================================="
-          echo " 3. 扫描 声卡底层的私有 ioctl / kcontrol (揪出游戏发包通道)"
+          echo " 3. 精准定位设备节点注册位置 (揪出 aw882xx_smartpa)"
           echo "======================================================="
-          grep -rn -iE "SNDRV_CTL_IOCTL|snd_kcontrol_new|haptic_fb_device" ./oplus_modules/ || echo "未找到声卡震动劫持通道"
-
-          echo "======================================================="
-          echo " 4. 扫描 游戏专用震动 API (如 tgpa, game-vibe)"
-          echo "======================================================="
-          grep -rnw -iE "game_vibe|tgpa|vibrate_level" ./oplus_modules/ || echo "未找到游戏专属震动 API"
+          grep -rn "aw882xx_smartpa" ./oplus_modules/ 2>/dev/null || echo "未找到该节点注册"
           
       - name: 构建内核
         run: |
