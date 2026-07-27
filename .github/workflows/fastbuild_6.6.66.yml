@@ -573,6 +573,14 @@ jobs:
           fi
           echo "========================================================="
 
+     
+      - name: 🔍 [终极雷达] 深度拉取并全量扫描一加私有马达驱动
+        run: |
+          echo "========================================================="
+          echo ">>> 1. 开始拉取一加私有模块仓库 (仅克隆最新一层，极速模式) <<<"
+          # 直接拉取你指定的那个分支，--depth=1 保证几秒钟就能拉完
+          git clone --depth=1 -b oneplus/sm8750_b_16.0.0_oneplus_13 https://github.com/OnePlusOSS/android_kernel_modules_and_devicetree_oneplus_sm8750.git oplus_vendor_repo
+          
       - name: 📖 [核心读取] 打印 haptic_common_driver.c 的关键函数
         run: |
           cd oplus_vendor_repo/vendor/oplus
