@@ -573,39 +573,15 @@ jobs:
           fi
           echo "========================================================="
 
-      - name: 🔍 [雷达探测] 全局扫描原机马达(Haptic/Vibrator)驱动文件
+      - name: 🔍 [超级雷达] 全局扫描欧加(Oplus)专属线性马达驱动
         run: |
           echo "========================================================="
-          echo ">>> 正在启动马达驱动文件雷达扫描 <<<"
-          cd kernel_workspace/common/
+          echo ">>> 正在启动 Oplus 专属马达雷达扫描 <<<"
+          # 注意这里直接在 kernel_workspace 根目录搜，不进 common
+          cd kernel_workspace/
           
-          echo "--- [1/4] 扫描 drivers/leds/ 目录 (重点排查区) ---"
-          if [ -d "drivers/leds/" ]; then
-            ls -1 drivers/leds/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
-          else
-            echo "目录不存在"
-          fi
-          
-          echo ""
-          echo "--- [2/4] 扫描 drivers/misc/ 目录 ---"
-          if [ -d "drivers/misc/" ]; then
-            ls -1 drivers/misc/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
-          else
-            echo "目录不存在"
-          fi
-          
-          echo ""
-          echo "--- [3/4] 扫描 drivers/input/misc/ 目录 ---"
-          if [ -d "drivers/input/misc/" ]; then
-            ls -1 drivers/input/misc/ | grep -iE "haptic|vib|aw8|qcom|oplus" || echo "该目录下未找到高度疑似的马达文件"
-          else
-            echo "目录不存在"
-          fi
-          
-          echo ""
-          echo "--- [4/4] 兜底方案：全局暴力搜索源码树 ---"
-          echo "搜索所有包含 'haptic' 或 'vibrator' 的 .c 文件："
-          find drivers/ -type f -name "*.c" | grep -iE "haptic|vibrator|aw869" || echo "全局未搜到标准命名的马达驱动"
+          echo "搜索所有包含 haptic, vibrator, aw86, aac, oplus_motor 的 .c 文件："
+          find . -type f -name "*.c" | grep -iE "haptic|vibrator|aw8|aac|oplus.*motor|oplus.*vib" || echo "未搜到欧加专属马达驱动"
           echo "========================================================="
           
       - name: 构建内核
